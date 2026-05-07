@@ -1,0 +1,162 @@
+
+# Блок 2: Функции, модули и область видимости
+
+## Цели урока
+
+- Писать функции с разными сигнатурами: позиционные и именованные аргументы, значения по умолчанию
+- Использовать `*args` и `**kwargs` осознанно
+- Понимать правило **LEGB** (local → enclosing → global → builtin) для scope
+- Организовывать код в пакеты и модули, импортировать без циклических зависимостей
+
+---
+
+## 1. Функции: `def`, `return`, документация
+
+```python
+def add(a: int, b: int) -> int:
+    """Return sum of two integers."""
+    return a + b
+```
+
+Без `return` функция возвращает `None`.
+
+---
+
+## 2. Аргументы: порядок и правила
+
+Допустимый порядок в сигнатуре (Python 3):
+
+1. Позиционные-only (`/` если используешь разделитель из PEP 570)
+2. Обычные позиционные или позиционные-или-keyword
+3. `*args`
+4. Keyword-only (после `*` или `*args`)
+5. `**kwargs`
+
+```python
+def configure(host: str, port: int = 8080, *, debug: bool = False) -> None:
+    # host, port — positional or keyword; debug — keyword-only
+    ...
+```
+
+Распаковка при вызове:
+
+```python
+opts = {"host": "127.0.0.1", "port": 9000}
+configure(**opts, debug=True)
+```
+
+---
+
+## 3. `*args` и `**kwargs`
+
+- `*args` — кортеж позиционных «лишних» аргументов
+- `**kwargs` — словарь неожиданных именованных аргументов
+
+```python
+def trace(tag: str, *values: object, **extra: object) -> None:
+    print(tag, values, extra)
+
+
+trace("run", 1, 2, sep="---")
+# values=(1, 2), extra={'sep': '---'}
+```
+
+**Практика:** не злоупотребляй — часто явные параметры читаемее, чем «мешок» kwargs.
+
+---
+
+## 4. Lambda и вложенные функции
+
+`lambda` — анонимная однострочная функция. Удобна в `sorted(..., key=)` и подобном, но для сложной логики лучше именованная `def` внутри функции (**nested function**).
+
+```python
+pairs = [("b", 2), ("a", 1)]
+pairs.sort(key=lambda p: p[1])
+```
+
+---
+
+## 5. LEGB: где видно имя
+
+1. **L**ocal — тело текущей функции
+2. **E**nclosing — внешние функции (closures)
+3. **G**lobal — модуль
+4. **B**uiltin — встроенные имена
+
+Чтение ищет снизу вверх по этой цепочке. **Присваивание** создаёт локальное имя, если не указано `global` / `nonlocal`.
+
+```python
+x = 0
+
+
+def outer() -> None:
+    x = 1
+
+    def inner() -> None:
+        nonlocal x
+        x = 2
+
+    inner()
+    assert x == 2
+
+
+outer()
+```
+
+Избегай `global` в больших программах; лучше явно передавать зависимости или использовать классы / DI.
+
+---
+
+## 6. Замыкания (closures)
+
+Внутренняя функция «захватывает» переменные из enclosing scope. Типичный подводный камень — цикл и отложенный вызов: все лямбды могут увидеть **одно** финальное значение счётчика. Решение: default-аргумент `lambda i=i: ...` или `functools.partial`.
+
+---
+
+## 7. Модули и пакеты
+
+- **Модуль** — файл `.py` (или расширение на C и т.д.)
+- **Пакет** — каталог с `__init__.py` (в Python 3.3+ может быть **namespace package** без `__init__.py`, но для учебных проектов `__init__.py` остаётся нормой)
+
+Импорты:
+
+```python
+import math
+from pathlib import Path
+from mypkg.utils import helper  # mypkg on PYTHONPATH or installed
+```
+
+`from module import *` — избегай в production (засоряет namespace, неочевидно для линтеров).
+
+**Относительный импорт** внутри пакета: `from .sub import x` (только если модуль — часть пакета, не top-level скрипт).
+
+---
+
+## 8. `__name__ == "__main__"` и `-m`
+
+```bash
+python -m mypkg.cli
+```
+
+Запускает `mypkg/cli.py` как `__main__`, корректно выставляя `sys.path` для пакета.
+
+---
+
+## Чеклист после блока
+
+- [ ] Можешь объяснить разницу между `global` и `nonlocal`
+- [ ] Пишешь keyword-only параметры там, где API не должен позволять перепутать порядок
+- [ ] Понимаешь, почему циклы + lambda без default-аргументов дают баги
+- [ ] Разделяешь код на модули без циклического `import`
+
+---
+
+## Дальше
+
+`02-functions-modules-practice.md`, затем блок 3 — ООП и протоколы.
+
+## Ссылки
+
+- [Defining functions](https://docs.python.org/3/tutorial/controlflow.html#defining-functions)
+- [Modules](https://docs.python.org/3/tutorial/modules.html)
+- [PEP 570 — positional-only parameters](https://peps.python.org/pep-0570/)

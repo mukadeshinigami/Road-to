@@ -24,26 +24,71 @@ def add(a: int, b: int) -> int:
 
 ## 2. Аргументы: порядок и правила
 
+Почему это важно: сигнатура функции — это контракт API. Правильный порядок параметров делает код читаемым, снижает число ошибок при вызове и облегчает backward compatibility.
+
 Допустимый порядок в сигнатуре (Python 3):
 
-1. Позиционные-only (`/` если используешь разделитель из PEP 570)
-2. Обычные позиционные или позиционные-или-keyword
+1. positional-only (`/`, PEP 570)
+2. positional-or-keyword
 3. `*args`
-4. Keyword-only (после `*` или `*args`)
+4. keyword-only (после `*` или `*args`)
 5. `**kwargs`
 
+Правило легко запомнить так: **сначала "что обязательно по позиции", потом "гибкие параметры", потом "всё именованное", и только в конце "мешок настроек"**.
+
 ```python
-def configure(host: str, port: int = 8080, *, debug: bool = False) -> None:
-    # host, port — positional or keyword; debug — keyword-only
+def connect(
+    host: str,
+    /,
+    port: int = 5432,
+    *tags: str,
+    timeout: float = 3.0,
+    ssl: bool = False,
+    **options: object,
+) -> None:
+    """Demonstrate legal parameter ordering."""
+    # host is positional-only
+    # port is positional-or-keyword
+    # tags collects extra positional arguments
+    # timeout and ssl are keyword-only
+    # options collects extra keyword arguments
     ...
+```
+
+Примеры вызова:
+
+```python
+connect("db.local")
+connect("db.local", 6432, "read-replica", timeout=5.0, ssl=True)
+connect("db.local", ssl=True, retries=3)  # retries goes to options
+```
+
+Типичные ошибки:
+
+```python
+connect(host="db.local")  # TypeError: host is positional-only
+connect("db.local", timeout=5.0, 6432)  # SyntaxError: positional after keyword
 ```
 
 Распаковка при вызове:
 
 ```python
-opts = {"host": "127.0.0.1", "port": 9000}
-configure(**opts, debug=True)
+args = ("db.local", 6432, "analytics")
+kwargs = {"timeout": 4.5, "ssl": True}
+connect(*args, **kwargs)
 ```
+
+Когда использовать разные типы параметров:
+
+- positional-only — когда имя параметра не должно быть частью публичного API
+- keyword-only — когда важна явность (`timeout=...` безопаснее, чем "магическое" третье число)
+- `*args`/`**kwargs` — для extensibility, но без злоупотребления: явные параметры обычно лучше для читаемости
+
+Мини-проверка:
+
+1. Почему `timeout` часто делают keyword-only?
+2. В каком случае стоит добавить `/` в сигнатуру?
+3. Что произойдет, если передать позиционный аргумент после keyword аргумента?
 
 ---
 

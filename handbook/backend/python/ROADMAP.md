@@ -24,6 +24,7 @@ _Отмечай чекбоксы по мере прохождения._
 - [ ] Блок 5: Типы и качество (`05-type-hints-quality.md`, `05-type-hints-quality-practice.md`)
 - [ ] Блок 6: Тесты и пакеты (`06-testing-packaging.md`, `06-testing-packaging-practice.md`)
 - [ ] Блок 7: Async (`07-async-io.md`, `07-async-io-practice.md`)
+- [ ] Капстон: [10 интегративных задач](capstone-10-integrated-tasks.md) _(по желанию, после блоков 1–7)_
 
 ---
 
@@ -98,6 +99,12 @@ _Отмечай чекбоксы по мере прохождения._
 **Цель:** `asyncio`, `gather`, семафоры, `to_thread`, понимание лимитов async.
 
 **Практика:** параллельные fake_fetch, semaphore, blocking в thread, echo server (опционально).
+
+---
+
+## Интеграция: 10 задач на все блоки
+
+После блоков **01–07** — файл **`capstone-10-integrated-tasks.md`**: десять крупных заданий, каждое сознательно опирается на темы из разных уроков (включая async и pytest).
 
 ---
 
